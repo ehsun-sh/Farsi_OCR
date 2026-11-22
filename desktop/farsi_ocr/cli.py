@@ -1,7 +1,7 @@
 """Command-line mode (also used for testing the Windows build).
 
   FarsiOCR.exe --check report.txt
-  FarsiOCR.exe --ocr scan.pdf photo.jpg --out result.docx [--device auto|cpu|cuda] [--mode text|markdown]
+  FarsiOCR.exe --ocr scan.pdf photo.jpg --out result.docx [--device cpu|cuda|auto] [--mode text|markdown]
                [--pages 1-3] [--download] [--log run.log]
 """
 import argparse
@@ -54,7 +54,7 @@ def main(argv):
     p.add_argument('--check')
     p.add_argument('--ocr', nargs='+')
     p.add_argument('--out')
-    p.add_argument('--device', default='auto', choices=['auto', 'cpu', 'cuda'])
+    p.add_argument('--device', default='cpu', choices=['auto', 'cpu', 'cuda'])
     p.add_argument('--mode', default='text', choices=['text', 'markdown'])
     p.add_argument('--pages', default='')
     p.add_argument('--pdf-width', type=int, default=1240)
@@ -65,12 +65,13 @@ def main(argv):
         return check(a.check)
     log = _writer(a.log)
     if a.download or not downloads.model_ready():
+        log('checking/downloading the model')
         last = [0]
 
         def progress(done, total):
             if done - last[0] > 50e6 or done == total:
                 last[0] = done
-                log(f'download {done / 1e6:.0f}/{total / 1e6:.0f} MB')
+                log(f'download/verify {done / 1e6:.0f}/{total / 1e6:.0f} MB')
         downloads.download_model(progress)
         if a.device == 'cuda' and not downloads.cuda_ready():
             downloads.download_cuda(progress)

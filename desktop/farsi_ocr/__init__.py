@@ -1,2 +1,2 @@
 """Farsi OCR desktop: Persian OCR with the Bina 0.4 Koochik model, on your own computer."""
-__version__ = '0.5.0'
+__version__ = '0.5.1'

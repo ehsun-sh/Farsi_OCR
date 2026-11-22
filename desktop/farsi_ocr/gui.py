@@ -289,15 +289,17 @@ class MainWindow(QMainWindow):
         self.btn_model = QPushButton('دانلود مدل')
         self.btn_model.setObjectName('primary')
         self.btn_model.clicked.connect(lambda: self.start_download('model'))
-        self.btn_cuda = QPushButton('فعال کردن کارت گرافیک NVIDIA')
+        self.btn_cuda = QPushButton('دانلود CUDA برای کارت NVIDIA (آزمایشی)')
         self.btn_cuda.clicked.connect(lambda: self.start_download('cuda'))
         self.btn_cancel_dl = QPushButton('توقف دانلود')
         self.btn_cancel_dl.clicked.connect(self.worker.cancel.set)
         row.addWidget(QLabel('پردازش با:'))
         self.device_box = QComboBox()
-        self.device_box.addItem('خودکار (کارت گرافیک اگر باشد)', 'auto')
-        self.device_box.addItem('فقط CPU', 'cpu')
-        self.device_box.setCurrentIndex(max(0, self.device_box.findData(self.settings.value('device', 'auto'))))
+        self.device_box.addItem('CPU (پیشنهادی)', 'cpu')
+        self.device_box.addItem('کارت گرافیک NVIDIA (آزمایشی)', 'cuda')
+        # 0.5.0 defaulted to 'auto' (GPU first), which turned out much slower on some laptops
+        saved = self.settings.value('device-v2', 'cpu')
+        self.device_box.setCurrentIndex(max(0, self.device_box.findData(saved)))
         self.device_box.currentIndexChanged.connect(self.on_device_changed)
         row.addWidget(self.device_box)
         row.addStretch(1)
@@ -428,8 +430,9 @@ class MainWindow(QMainWindow):
         else:
             lines.append('مدل دانلود شده است.')
         if nvidia and not cuda:
-            lines.append(f'کارت گرافیک NVIDIA پیدا شد. برای سرعت خیلی بیشتر، «فعال کردن کارت گرافیک NVIDIA» را بزنید '
-                         f'(یک بار حدود {fmt_mb(downloads.CUDA_BYTES)} کتابخانهٔ CUDA از سایت رسمی NVIDIA/PyPI دانلود می‌شود).')
+            lines.append(f'<span style="color:#888">اجرا روی کارت گرافیک NVIDIA آزمایشی است و فعلاً روی بعضی لپ‌تاپ‌ها از CPU کندتر است. '
+                         f'برای امتحانش «دانلود CUDA» را بزنید (یک بار حدود {fmt_mb(downloads.CUDA_BYTES)} از بسته‌های رسمی NVIDIA) '
+                         'و بعد «کارت گرافیک NVIDIA» را انتخاب کنید.</span>')
         if not nvidia and ready:
             lines.append('<span style="color:#888">کارت گرافیک NVIDIA پیدا نشد؛ برنامه با CPU کار می‌کند.</span>')
         self.model_label.setText('<br>'.join(lines))
@@ -471,7 +474,9 @@ class MainWindow(QMainWindow):
         self.load_engine()
 
     def on_device_changed(self):
-        self.settings.setValue('device', self.device_box.currentData())
+        self.settings.setValue('device-v2', self.device_box.currentData())
+        if self.device_box.currentData() == 'cuda' and not downloads.cuda_ready():
+            self.set_status('برای کارت گرافیک اول «دانلود CUDA» را بزنید؛ تا آن موقع برنامه با CPU کار می‌کند.')
         if downloads.model_ready():
             self.load_engine()
 
@@ -480,7 +485,9 @@ class MainWindow(QMainWindow):
         self.update_buttons()
         self.run_bar.setVisible(True)
         self.run_bar.setRange(0, 0)
-        self.request_engine.emit(self.device_box.currentData())
+        choice = self.device_box.currentData()
+        # GPU choice: try CUDA, fall back to the CPU if it can't start
+        self.request_engine.emit('auto' if choice == 'cuda' and downloads.cuda_ready() else 'cpu')
 
     @Slot(str, str)
     def on_model_loaded(self, device, reason):
@@ -489,7 +496,7 @@ class MainWindow(QMainWindow):
         self.run_bar.setVisible(False)
         self.run_bar.setRange(0, 1000)
         msg = 'مدل آماده است.'
-        if reason and self.device_box.currentData() == 'auto' and downloads.cuda_ready():
+        if reason and self.device_box.currentData() == 'cuda' and downloads.cuda_ready():
             msg += ' (کارت گرافیک راه نیفتاد و برنامه با CPU کار می‌کند: ' + reason[:300] + ')'
         self.set_status(msg)
         self.refresh_model_box()

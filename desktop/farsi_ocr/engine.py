@@ -79,8 +79,10 @@ class Engine:
         self.sessions = {}
         self.device = 'cpu'
         self.fallback_reason = None
-        want_gpu = device in ('auto', 'cuda')
+        want_gpu = device in ('auto', 'cuda')  # 'auto' = GPU when it works
         if want_gpu and 'CUDAExecutionProvider' in ort.get_available_providers():
+            # Keep compiled GPU kernels between runs (the default 256 MB cache is too small).
+            os.environ.setdefault('CUDA_CACHE_MAXSIZE', str(4 << 30))
             try:
                 if cuda_dir:
                     add_cuda_dll_dirs(cuda_dir)
