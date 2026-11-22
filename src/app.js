@@ -6,6 +6,7 @@ const $ = (id) => document.getElementById(id);
 const fa = (n) => String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
 const mb = (bytes) => fa(Math.round(bytes / 1e6));
 const MAX_IMAGE_PIXELS = 20_000_000;
+const MAX_IMAGE_WIDTH = 1600; // wider images are slow and the model shrinks them to 1664 anyway
 
 const state = {
   client: null,        // BinaClient once the model is loaded
@@ -253,7 +254,7 @@ function whiteCanvas(width, height) {
 async function imageToPng(file) {
   const bitmap = await createImageBitmap(file, {imageOrientation: 'from-image'});
   let {width, height} = bitmap;
-  const scale = Math.min(1, Math.sqrt(MAX_IMAGE_PIXELS / (width * height)));
+  const scale = Math.min(1, MAX_IMAGE_WIDTH / width, Math.sqrt(MAX_IMAGE_PIXELS / (width * height)));
   width = Math.max(1, Math.round(width * scale));
   height = Math.max(1, Math.round(height * scale));
   const {canvas, ctx} = whiteCanvas(width, height);
@@ -346,8 +347,10 @@ async function run() {
           if (state.stopping) throw new DOMException('Stopped', 'AbortError');
           const partLabel = regions.length > 1 ? ` (بخش ${fa(region.index + 1)} از ${fa(regions.length)})` : '';
           client.onProgress = (m) => {
-            const tokens = m.tokens ? ` — ${fa(m.tokens)} توکن` : '';
-            status.textContent = `${where}${partLabel}: در حال خواندن متن${tokens}`;
+            const stage = m.stage === 'vision' ? 'تحلیل تصویر'
+              : m.stage === 'neck' || m.stage === 'prefill' ? 'آماده‌سازی خواندن'
+              : `خواندن متن${m.tokens ? ` — ${fa(m.tokens)} توکن` : ''}`;
+            status.textContent = `${where}${partLabel}: ${stage}…`;
             if (m.text !== undefined) view.textarea.value = [...texts, m.text].filter(Boolean).join(joiner);
             setBar(bar, (donePages + (region.index + (m.stage === 'decode' ? .5 : .2)) / regions.length) / totalPages);
           };
