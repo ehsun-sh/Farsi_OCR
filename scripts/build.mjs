@@ -38,13 +38,14 @@ const BINA_FILES = {
   'custom-runtime/build-receipt.json': '1346f45327810a22cda6d7232f2a3a39a5c007875262a33bc032237b3e9d4c8c',
 };
 
-// The ONNX Runtime .wasm is 29.5 MB, above Cloudflare Pages' 25 MiB per-file
-// limit, so the worker loads it from Hugging Face instead of from /ort/.
+// The ONNX Runtime .wasm is 29.5 MB, above Cloudflare's 25 MiB per-file asset
+// limit, so the worker loads it from Hugging Face (directly or through the /hf/
+// proxy; worker-prelude.js sets self.__BINA_RESOLVE) instead of from /ort/.
 const WORKER_PATCHES = [
   [
     'ort = await import("/custom-runtime/ort.jsep-bina.mjs");\n  ort.env.wasm.wasmPaths = "/ort/";\n  ort.env.wasm.numThreads = 2;',
     'ort = await import("/bina/custom-runtime/ort.jsep-bina.mjs");\n' +
-      `  ort.env.wasm.wasmPaths = { mjs: new URL("/bina/ort/ort-wasm-simd-threaded.jsep.mjs", self.location.href).href, wasm: ${JSON.stringify(BINA_RESOLVE + 'ort/ort-wasm-simd-threaded.jsep.wasm')} };\n` +
+      '  ort.env.wasm.wasmPaths = { mjs: new URL("/bina/ort/ort-wasm-simd-threaded.jsep.mjs", self.location.href).href, wasm: self.__BINA_RESOLVE + "ort/ort-wasm-simd-threaded.jsep.wasm" };\n' +
       '  ort.env.wasm.numThreads = self.crossOriginIsolated ? 2 : 1;',
   ],
 ];

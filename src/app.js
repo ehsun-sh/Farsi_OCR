@@ -1,5 +1,5 @@
 import {APPROX_DOWNLOAD_MB, BINA_CACHE_NAME, BINA_CANDIDATE_SHA256, BINA_SOURCE_STEP, PROMPTS} from './config.js';
-import {BinaClient, LayoutClient} from './bina-client.js';
+import {BinaClient, LayoutClient, modelResolveBase} from './bina-client.js';
 import {baseName, toDocx, toMarkdown, toText} from './exporters.js';
 
 const $ = (id) => document.getElementById(id);
@@ -95,25 +95,29 @@ function loadModel() {
 
   const downloads = new Map();
   let fromCache = 0;
-  const client = new BinaClient({
-    onDownload: (m) => {
-      downloads.set(m.url, m);
-      if (m.cached) fromCache++;
-      let loaded = 0, total = 0;
-      for (const d of downloads.values()) { loaded += d.loaded; total += d.total || d.loaded; }
-      const expected = Math.max(total, APPROX_DOWNLOAD_MB * 1e6);
-      setBar(bar, loaded / expected);
-      status.textContent = fromCache && fromCache === downloads.size
-        ? `خواندن مدل از حافظهٔ مرورگر… ${mb(loaded)} مگابایت`
-        : `دانلود مدل: ${mb(loaded)} از حدود ${fa(APPROX_DOWNLOAD_MB)} مگابایت`;
-    },
-    onProgress: (m) => {
-      const text = STAGES[m.stage];
-      if (text) { status.textContent = text; setBar(bar, null); }
-    },
-  });
+  let client = null;
+  state.loading = modelResolveBase().then((resolveBase) => {
+    client = new BinaClient({
+      resolveBase,
+      onDownload: (m) => {
+        downloads.set(m.url, m);
+        if (m.cached) fromCache++;
+        let loaded = 0, total = 0;
+        for (const d of downloads.values()) { loaded += d.loaded; total += d.total || d.loaded; }
+        const expected = Math.max(total, APPROX_DOWNLOAD_MB * 1e6);
+        setBar(bar, loaded / expected);
+        status.textContent = fromCache && fromCache === downloads.size
+          ? `خواندن مدل از حافظهٔ مرورگر… ${mb(loaded)} مگابایت`
+          : `دانلود مدل: ${mb(loaded)} از حدود ${fa(APPROX_DOWNLOAD_MB)} مگابایت`;
+      },
+      onProgress: (m) => {
+        const text = STAGES[m.stage];
+        if (text) { status.textContent = text; setBar(bar, null); }
+      },
+    });
 
-  state.loading = client.initialize().then((ready) => {
+    return client.initialize();
+  }).then((ready) => {
     if (ready.source_step !== BINA_SOURCE_STEP || ready.candidate_sha256 !== BINA_CANDIDATE_SHA256) {
       throw new Error('نسخهٔ مدل با نسخهٔ مورد انتظار یکی نیست');
     }
@@ -125,7 +129,7 @@ function loadModel() {
     $('load-model').textContent = 'مدل بارگذاری شد';
     return client;
   }).catch((error) => {
-    client.close();
+    client?.close();
     $('model-state').textContent = 'خطا';
     status.classList.add('error');
     status.textContent = 'بارگذاری مدل ناموفق بود: ' + friendlyError(error);

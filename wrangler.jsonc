@@ -1,0 +1,12 @@
+{
+  // Cloudflare Workers deployment (Workers Builds: build command "npm run build",
+  // deploy command "npx wrangler deploy").
+  "name": "farsi-ocr",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/hf/*"]
+  }
+}

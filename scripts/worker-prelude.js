@@ -5,14 +5,18 @@
 //  * the page gets download progress messages ({kind: 'download', ...}).
 {
   const CACHE_NAME = 'bina-0.4-koochik-a4f59f1c';
-  const CACHEABLE = 'https://huggingface.co/Reza2kn/Bina-0.4-Koochik-ONNX-WebGPU-INT4/resolve/a4f59f1c659435721a65aa0d881c9a5cd7bfe7ee/';
+  const REVISION = 'a4f59f1c659435721a65aa0d881c9a5cd7bfe7ee';
+  // Where model files come from: the page passes ?resolve=<url> (the site's own
+  // /hf/ proxy when available), otherwise straight from Hugging Face.
+  const DIRECT = `https://huggingface.co/Reza2kn/Bina-0.4-Koochik-ONNX-WebGPU-INT4/resolve/${REVISION}/`;
+  self.__BINA_RESOLVE = new URL(self.location.href).searchParams.get('resolve') || DIRECT;
   const originalFetch = self.fetch.bind(self);
   const report = (url, loaded, total, cached, done) =>
     self.postMessage({kind: 'download', url, loaded, total, cached, done});
 
   self.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    if (!url.startsWith(CACHEABLE) || (init && init.method && init.method !== 'GET')) return originalFetch(input, init);
+    if (!url.includes(REVISION + '/') || (init && init.method && init.method !== 'GET')) return originalFetch(input, init);
     let cache = null;
     try {
       cache = await caches.open(CACHE_NAME);

@@ -8,7 +8,7 @@
 ## چطور کار می‌کند؟
 
 - **سرور لازم نیست.** مدل با WebGPU روی کارت گرافیک خود کاربر و داخل مرورگر اجرا می‌شود. فایل‌ها هیچ‌وقت از کامپیوتر کاربر بیرون نمی‌روند.
-  به همین دلیل سایت کاملاً استاتیک است و روی Cloudflare Pages (رایگان) میزبانی می‌شود.
+  به همین دلیل سایت استاتیک است و روی Cloudflare (رایگان) میزبانی می‌شود؛ فقط یک Worker کوچک فایل‌های مدل را از Hugging Face رد می‌کند.
 - بار اول حدود **۷۷۰ مگابایت** فایل مدل مستقیماً از Hugging Face دانلود و در Cache Storage مرورگر ذخیره می‌شود؛ دفعه‌های بعد از همان‌جا خوانده می‌شود.
 - PDF با [pdf.js](https://mozilla.github.io/pdf.js/) صفحه‌به‌صفحه به تصویر تبدیل می‌شود، هر صفحه با کد چیدمان خود بینا به ستون‌ها و بلوک‌ها تقسیم می‌شود و بلوک‌ها یکی‌یکی به مدل داده می‌شوند (با نمایش پیشرفت و امکان توقف).
 - خروجی Word راست‌به‌چپ است و برای هر صفحهٔ PDF یک عنوان و شکستن صفحه دارد.
@@ -30,32 +30,34 @@ npm run dev          # build + سرور محلی روی http://127.0.0.1:8788
 `npm run build` خروجی را در `dist/` می‌سازد. این دستور چند فایل کوچک اجرای بینا (worker، ONNX Runtime سفارشی، کد چیدمان و مجوزها) را از Hugging Face،
 از یک revision ثابت، دانلود و با SHA-256 بررسی می‌کند. فایل‌های بزرگ مدل در build نیستند و مرورگر کاربر مستقیماً از Hugging Face می‌گیرد.
 
-## استقرار روی Cloudflare Pages
+## استقرار روی Cloudflare
 
-### روش ۱: اتصال به GitHub (پیشنهادی)
+> **چرا یک Worker کوچک هم لازم است؟** Hugging Face به بعضی دامنه‌های میزبانی (مثل `*.workers.dev`) اجازهٔ دانلود مستقیم از مرورگر (CORS) نمی‌دهد.
+> برای همین `worker/hf-proxy.js` فایل‌های مدل را سمت Cloudflare از Hugging Face می‌گیرد و از همان دامنهٔ سایت زیر مسیر `/hf/` تحویل می‌دهد
+> (فقط همان نسخهٔ ثابت مدل؛ پراکسی باز نیست). Cloudflare این فایل‌ها را کش می‌کند. اگر پراکسی در دسترس نباشد، برنامه مستقیماً از Hugging Face دانلود می‌کند.
 
-1. در داشبورد Cloudflare به **Workers & Pages → Create → Pages → Connect to Git** بروید و همین مخزن را انتخاب کنید.
-2. تنظیمات build:
-   - **Framework preset:** `None`
+### روش ۱: Cloudflare Workers (پیشنهادی)
+
+1. در داشبورد Cloudflare به **Workers & Pages → Create → Import a repository** بروید و این مخزن را انتخاب کنید.
+2. تنظیمات:
+   - **Project name:** `farsi-ocr` (باید با `name` در `wrangler.jsonc` یکی باشد)
    - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-   - **Environment variable** (اختیاری): `NODE_VERSION` = `20`
-3. **Save and Deploy**. بعد از چند دقیقه سایت روی `https://<نام-پروژه>.pages.dev` بالا می‌آید و با هر push به‌روز می‌شود.
-   دامنهٔ شخصی را از **Custom domains** اضافه کنید.
+   - **Deploy command:** `npx wrangler deploy`
+3. **Deploy**. سایت روی `https://farsi-ocr.<حساب-شما>.workers.dev` بالا می‌آید و با هر push به `main` به‌روز می‌شود.
+   دامنهٔ شخصی را از **Settings → Domains & Routes** اضافه کنید.
 
-### روش ۲: از خط فرمان با Wrangler
+از خط فرمان: `npm install && npm run build && npx wrangler deploy`
 
-```bash
-npm install
-npm run build
-npx wrangler pages deploy dist --project-name farsi-ocr
-```
+### روش ۲: Cloudflare Pages
+
+**Workers & Pages → Create → Pages → Connect to Git**، با Build command `npm run build`، Build output directory `dist` و متغیر `NODE_VERSION=20`.
+پوشهٔ `functions/` همان پراکسی `/hf/` را به‌صورت Pages Function فعال می‌کند.
 
 ### نکته‌ها
 
-- Cloudflare Pages حداکثر ۲۵ مگابایت برای هر فایل اجازه می‌دهد؛ برای همین فایل `.wasm` اجرای ONNX (۲۹٫۵ مگابایت) و وزن‌های مدل از Hugging Face بارگذاری می‌شوند و در build فقط مسیر آن در worker عوض می‌شود.
-- سایت باید روی **HTTPS** باشد (pages.dev خودش HTTPS است). WebGPU روی HTTP کار نمی‌کند.
-- فایل `src/_headers` هدرهای کش را برای Cloudflare تنظیم می‌کند.
+- Cloudflare حداکثر ۲۵ مگابایت برای هر فایل استاتیک اجازه می‌دهد؛ برای همین فایل `.wasm` اجرای ONNX (۲۹٫۵ مگابایت) و وزن‌های مدل از طریق `/hf/` (یا مستقیم از Hugging Face) بارگذاری می‌شوند.
+- سایت باید روی **HTTPS** باشد. WebGPU روی HTTP کار نمی‌کند.
+- فایل `src/_headers` هدرهای کش فایل‌های استاتیک را تنظیم می‌کند.
 
 ## ساختار
 
@@ -67,6 +69,9 @@ src/                 کد برنامه (HTML/CSS/JS بدون فریم‌ورک)
   config.js          revision ثابت مدل
 scripts/build.mjs    ساخت dist/ (کپی pdf.js و docx، دانلود و وصلهٔ فایل‌های اجرای بینا)
 scripts/worker-prelude.js  کش‌کردن فایل‌های مدل و گزارش پیشرفت دانلود داخل worker
+worker/              Cloudflare Worker: سرو dist/ و پراکسی /hf/ برای فایل‌های مدل
+functions/hf/        همان پراکسی برای Cloudflare Pages
+wrangler.jsonc       تنظیمات Worker
 ```
 
 ## مجوز و اعتبار (Credits & License)

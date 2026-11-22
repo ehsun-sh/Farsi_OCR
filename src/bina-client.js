@@ -1,10 +1,30 @@
 // Talks to Bina's resident inference worker (adapted from the client shipped
 // with Reza2kn/Bina-0.4-Koochik-ONNX-WebGPU-INT4, OpenMDW-1.1).
-import {BINA_MODEL_BASE} from './config.js';
+import {HF_DIRECT_RESOLVE, HF_PROXY_RESOLVE} from './config.js';
+
+// Picks where to download model files from: the same-origin proxy if the site
+// has one, otherwise Hugging Face directly.
+let resolvePromise = null;
+export function modelResolveBase() {
+  resolvePromise ??= (async () => {
+    try {
+      const r = await fetch(HF_PROXY_RESOLVE + 'model/assets/prompts.json', {cache: 'no-store'});
+      if (r.ok && (r.headers.get('content-type') || '').includes('json')) {
+        await r.json();
+        return new URL(HF_PROXY_RESOLVE, location.href).href;
+      }
+    } catch {}
+    return HF_DIRECT_RESOLVE;
+  })();
+  return resolvePromise;
+}
 
 export class BinaClient {
-  constructor({onProgress = () => {}, onDownload = () => {}} = {}) {
-    this.worker = new Worker('/bina/resident/inference-worker.js', {type: 'module'});
+  constructor({resolveBase, onProgress = () => {}, onDownload = () => {}}) {
+    this.base = resolveBase + 'model';
+    const workerUrl = new URL('/bina/resident/inference-worker.js', location.href);
+    workerUrl.searchParams.set('resolve', resolveBase);
+    this.worker = new Worker(workerUrl, {type: 'module'});
     this.pending = null;
     this.nextId = 0;
     this.onProgress = onProgress;
@@ -43,12 +63,12 @@ export class BinaClient {
   }
 
   initialize() {
-    return this.request({type: 'initialize', provider: 'webgpu', base: BINA_MODEL_BASE});
+    return this.request({type: 'initialize', provider: 'webgpu', base: this.base});
   }
 
   async transcribe(pngBuffer, prompt) {
     const reply = await this.request(
-      {image: pngBuffer, provider: 'webgpu', prompt, base: BINA_MODEL_BASE, repetitionGuard: false},
+      {image: pngBuffer, provider: 'webgpu', prompt, base: this.base, repetitionGuard: false},
       [pngBuffer],
     );
     return reply.result;
