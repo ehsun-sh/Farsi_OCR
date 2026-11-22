@@ -42,6 +42,13 @@ function maxHeightFor(w) {
   return Math.min(MODEL_MAX_H, Math.floor((rows * 16) / scale));
 }
 
+// Number of 16x16 patches the model will see for a w x h block (used for
+// progress and time estimates).
+function patchCount(w, h) {
+  const scale = Math.min(1, MODEL_MAX_W / w, MODEL_MAX_H / h);
+  return Math.ceil((w * scale) / 64) * 4 * Math.ceil((h * scale) / 16);
+}
+
 // Cut [top, bottom) into pieces no taller than maxH, at blank rows.
 function cuts(rowInk, top, bottom, rowMin, maxH) {
   const out = [top];
@@ -98,6 +105,7 @@ async function refine(region) {
     if (!ink) continue;
     pieces.push({
       bbox: [bx0 + x0, by0 + y0, bx0 + x1, by0 + y1],
+      patches: patchCount(x1 - x0, y1 - y0),
       png: await encode(rgb, w, x0, y0, x1 - x0, y1 - y0),
     });
   }

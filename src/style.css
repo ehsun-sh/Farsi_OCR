@@ -68,6 +68,10 @@ a { color: var(--accent); }
 .small { font-size: .88rem; }
 .status { min-height: 1.6em; margin: 6px 0 0; color: var(--muted); font-size: .92rem; overflow-wrap: anywhere; }
 .status.error { color: #c2410c; }
+.eta { margin: 8px 0 0; font-weight: 500; }
+.eta .pct { color: var(--accent); font-size: 1.1rem; }
+#gpu-info { margin: 4px 0 0; }
+#gpu-info b { color: var(--text); font-weight: 500; }
 
 .chip {
   font-size: .85rem; padding: 2px 12px; border-radius: 999px;

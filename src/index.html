@@ -32,6 +32,7 @@
         <h2><span class="step">۱</span> مدل</h2>
         <span id="model-state" class="chip">آماده نشده</span>
       </div>
+      <p id="gpu-info" class="small muted" hidden></p>
       <p id="model-note" class="muted">بار اول حدود ۷۷۰ مگابایت از Hugging Face دانلود می‌شود و در مرورگر ذخیره می‌ماند؛ دفعه‌های بعد سریع بالا می‌آید.</p>
       <div class="progress" id="model-progress" hidden><div class="bar"></div></div>
       <p id="model-status" class="status" role="status"></p>
@@ -78,6 +79,7 @@
         <button id="stop" class="btn" disabled>توقف</button>
       </div>
       <div class="progress" id="run-progress" hidden><div class="bar"></div></div>
+      <p id="run-eta" class="eta" hidden></p>
       <p id="run-status" class="status" role="status"></p>
     </section>
 

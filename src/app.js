@@ -51,11 +51,32 @@ async function checkWebGPU() {
       'درایور گرافیک را به‌روز کنید و مرورگر را دوباره باز کنید. وضعیت را در <span dir="ltr">chrome://gpu</span> ببینید.</p>');
     return false;
   }
+  showGpuInfo(adapter);
   if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
     show('روی موبایل ممکن است کار نکند',
       `<p>مدل حدود ${fa(APPROX_DOWNLOAD_MB)} مگابایت است و به حافظهٔ گرافیکی زیادی نیاز دارد. اگر صفحه بسته شد یا خطا داد، از کامپیوتر استفاده کنید.</p>`, false);
   }
   return true;
+}
+
+// Shows which graphics card the browser gave us. On Windows, Chrome ignores the
+// "high-performance" request and the OS decides, which on laptops is often the
+// slower integrated GPU.
+function showGpuInfo(adapter) {
+  const info = adapter.info || {};
+  const name = [info.vendor, info.architecture, info.description].filter(Boolean).join(' · ') || 'نامشخص';
+  const el = $('gpu-info');
+  el.hidden = false;
+  const integrated = /intel|qualcomm|arm|apple/i.test(info.vendor || '') || info.isFallbackAdapter;
+  const windows = /Windows/i.test(navigator.userAgent);
+  let tip = '';
+  if (integrated && windows) {
+    tip = ' — به نظر کارت گرافیک داخلی (کم‌سرعت‌تر) است. اگر کامپیوترتان کارت گرافیک جدا (NVIDIA یا AMD) دارد، در ویندوز به ' +
+      '<b>Settings ← System ← Display ← Graphics</b> بروید، Chrome (یا Edge) را انتخاب و «<b>High performance</b>» را بزنید، بعد مرورگر را کامل ببندید و دوباره باز کنید.';
+  } else if (integrated) {
+    tip = ' — کارت گرافیک داخلی؛ سرعت ممکن است محدود باشد.';
+  }
+  el.innerHTML = `کارت گرافیک: <b dir="ltr">${name.replace(/[<>&]/g, '')}</b>${tip}`;
 }
 
 async function modelIsCached() {
@@ -291,6 +312,77 @@ function parsePages(spec, count) {
 }
 
 // ---------------------------------------------------------------------------
+// Progress and time estimate
+//
+// Work is measured in image patches (what the model actually processes).
+// Seconds-per-patch starts from a typical value and is replaced by the real
+// speed of this computer as soon as the first block is done.
+
+const DEFAULT_SECONDS_PER_PATCH = 8 / 1300;
+
+function fmtDuration(sec) {
+  sec = Math.max(0, Math.round(sec));
+  if (sec < 60) return `${fa(Math.max(5, Math.ceil(sec / 5) * 5))} ثانیه`;
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${fa(min)} دقیقه`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${fa(h)} ساعت و ${fa(m)} دقیقه` : `${fa(h)} ساعت`;
+}
+
+class Progress {
+  constructor(totalPages) {
+    this.totalPages = totalPages;
+    this.laidOutPages = 0;
+    this.knownPatches = 0;    // patches of pages already split into blocks
+    this.donePatches = 0;     // patches of finished blocks
+    this.doneSeconds = 0;     // time spent on finished blocks
+    this.current = 0;         // fraction of the current block done
+    this.currentPatches = 0;
+  }
+  addPage(regions) {
+    this.laidOutPages++;
+    this.knownPatches += regions.reduce((n, r) => n + (r.patches || 0), 0);
+  }
+  get totalPatches() {
+    const perPage = this.laidOutPages ? this.knownPatches / this.laidOutPages : 0;
+    return Math.max(1, this.knownPatches + (this.totalPages - this.laidOutPages) * perPage);
+  }
+  get measured() { return this.donePatches > 0; }
+  get rate() {
+    if (this.measured) return this.doneSeconds / this.donePatches;
+    // speed remembered from an earlier run on this computer
+    try { const saved = +localStorage.getItem('farsi-ocr:sec-per-patch'); if (saved > 0) return saved; } catch {}
+    return DEFAULT_SECONDS_PER_PATCH;
+  }
+  saveRate() {
+    try { if (this.measured) localStorage.setItem('farsi-ocr:sec-per-patch', String(this.rate)); } catch {}
+  }
+  get fraction() {
+    return Math.min(1, (this.donePatches + this.current * this.currentPatches) / this.totalPatches);
+  }
+  get remainingSeconds() {
+    return (this.totalPatches - this.donePatches - this.current * this.currentPatches) * this.rate;
+  }
+}
+
+// How far a block is, from the worker's progress messages.
+function blockFraction(m) {
+  if (m.stage === 'vision') return 0.05;
+  if (m.stage === 'neck' || m.stage === 'prefill') return 0.25;
+  if (m.stage === 'decode') return 0.3 + 0.65 * (1 - Math.exp(-(m.tokens || 0) / 120));
+  return 0;
+}
+
+function showEta(progress) {
+  const el = $('run-eta');
+  el.hidden = false;
+  const pct = `<span class="pct">${fa(Math.floor(progress.fraction * 100))}٪</span>`;
+  if (!progress.laidOutPages) { el.innerHTML = `${pct} — در حال تخمین زمان…`; return; }
+  const left = fmtDuration(progress.remainingSeconds);
+  el.innerHTML = `${pct} — ${progress.measured ? 'حدود' : 'تخمین اولیه: حدود'} ${left} مانده`;
+}
+
+// ---------------------------------------------------------------------------
 // Running OCR
 
 async function run() {
@@ -320,6 +412,8 @@ async function run() {
     }
     const totalPages = jobs.reduce((n, j) => n + j.pages.length, 0);
     let donePages = 0;
+    const progress = new Progress(totalPages);
+    showEta(progress);
     $('results-card').hidden = false;
 
     for (const job of jobs) {
@@ -337,24 +431,37 @@ async function run() {
         view.wrap.classList.add('working');
         const where = `${job.entry.file.name}${job.pdf ? ` — صفحهٔ ${fa(number)}` : ''}`;
         status.textContent = `${where}: آماده‌سازی تصویر…`;
-        setBar(bar, donePages / totalPages);
+        setBar(bar, progress.fraction);
 
         const png = job.pdf ? await pdfPageToPng(job.pdf, number, pdfWidth) : await imageToPng(job.entry.file);
         const {regions} = await state.layout.partition(png);
+        progress.addPage(regions);
+        showEta(progress);
         const texts = [];
         const joiner = mode === 'markdown' ? '\n\n' : '\n';
         for (const region of regions) {
           if (state.stopping) throw new DOMException('Stopped', 'AbortError');
           const partLabel = regions.length > 1 ? ` (بخش ${fa(region.index + 1)} از ${fa(regions.length)})` : '';
+          progress.current = 0;
+          progress.currentPatches = region.patches || 0;
+          const blockStart = performance.now();
           client.onProgress = (m) => {
             const stage = m.stage === 'vision' ? 'تحلیل تصویر'
               : m.stage === 'neck' || m.stage === 'prefill' ? 'آماده‌سازی خواندن'
               : `خواندن متن${m.tokens ? ` — ${fa(m.tokens)} توکن` : ''}`;
             status.textContent = `${where}${partLabel}: ${stage}…`;
             if (m.text !== undefined) view.textarea.value = [...texts, m.text].filter(Boolean).join(joiner);
-            setBar(bar, (donePages + (region.index + (m.stage === 'decode' ? .5 : .2)) / regions.length) / totalPages);
+            progress.current = Math.max(progress.current, blockFraction(m));
+            setBar(bar, progress.fraction);
+            showEta(progress);
           };
           const result = await client.transcribe(region.png, prompt);
+          progress.donePatches += region.patches || 0;
+          progress.doneSeconds += (performance.now() - blockStart) / 1000;
+          progress.current = 0;
+          progress.saveRate();
+          setBar(bar, progress.fraction);
+          showEta(progress);
           texts.push(result.selected.ocr_prediction);
           page.text = texts.filter(Boolean).join(joiner);
           view.textarea.value = page.text;
@@ -367,6 +474,7 @@ async function run() {
       renderFiles();
     }
     setBar(bar, 1);
+    $('run-eta').hidden = true;
     const seconds = (performance.now() - started) / 1000;
     status.textContent = `تمام شد: ${fa(totalPages)} صفحه در ${fa(Math.round(seconds))} ثانیه. فایل خروجی را از پایین دانلود کنید.`;
     state.files = [];
@@ -381,6 +489,7 @@ async function run() {
   } finally {
     state.running = false;
     bar.hidden = true;
+    $('run-eta').hidden = true;
     document.querySelectorAll('.page.working').forEach((el) => el.classList.remove('working'));
     pruneEmptyDocs();
     renderFiles();
