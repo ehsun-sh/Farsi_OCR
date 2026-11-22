@@ -1,12 +1,12 @@
 :root {
-  --bg: #f6f7f5;
+  --bg: #f4f4f5;
   --surface: #ffffff;
-  --text: #1c2421;
-  --muted: #5d6b66;
-  --line: #dde3df;
-  --accent: #0f766e;
+  --text: #1f2023;
+  --muted: #62646b;
+  --line: #dcdde1;
+  --accent: #ea580c;
   --accent-ink: #ffffff;
-  --accent-soft: #e3f2ef;
+  --accent-soft: #fff1e6;
   --warn-bg: #fff4e0;
   --warn-line: #f0c36d;
   --err-bg: #fdecec;
@@ -16,14 +16,14 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111615;
-    --surface: #1a2120;
-    --text: #e6ecea;
-    --muted: #9aa9a4;
-    --line: #2c3735;
-    --accent: #2dd4bf;
-    --accent-ink: #062320;
-    --accent-soft: #163330;
+    --bg: #18181b;
+    --surface: #232327;
+    --text: #ececee;
+    --muted: #a1a1aa;
+    --line: #3a3a40;
+    --accent: #fb923c;
+    --accent-ink: #1c0d03;
+    --accent-soft: #3a2314;
     --warn-bg: #2f2612;
     --warn-line: #6d5420;
     --err-bg: #331a1a;
@@ -142,6 +142,8 @@ select, input[type=text] {
 
 .foot { padding-bottom: 40px; font-size: .92rem; }
 .foot p { margin: 8px 0; }
+.version { font-size: .8rem; color: var(--muted); direction: ltr; text-align: right; }
+.top .version { margin: 0 0 2px; }
 
 @media (max-width: 520px) {
   .top h1 { font-size: 1.5rem; }

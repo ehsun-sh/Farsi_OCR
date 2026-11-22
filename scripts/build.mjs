@@ -9,6 +9,7 @@
 // The model weights (~770 MB) are NOT copied: the visitor's browser downloads
 // them straight from Hugging Face the first time and keeps them in Cache Storage.
 
+import {execSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {cp, mkdir, readFile, rm, writeFile} from 'node:fs/promises';
 import {dirname, join} from 'node:path';
@@ -76,6 +77,24 @@ async function put(rel, data) {
 
 await rm(dist, {recursive: true, force: true});
 await cp(join(root, 'src'), dist, {recursive: true});
+
+// --- version stamp ----------------------------------------------------------
+const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+let commit = process.env.WORKERS_CI_COMMIT_SHA || process.env.CF_PAGES_COMMIT_SHA || '';
+if (!commit) {
+  try { commit = execSync('git rev-parse HEAD', {cwd: root}).toString().trim(); } catch { commit = 'local'; }
+}
+const shortCommit = commit.slice(0, 7);
+const buildDate = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+const version = {version: pkg.version, commit, buildDate};
+await writeFile(join(dist, 'version.json'), JSON.stringify(version, null, 2) + '\n');
+const indexFile = join(dist, 'index.html');
+await writeFile(indexFile, (await readFile(indexFile, 'utf8'))
+  .replaceAll('__APP_VERSION__', pkg.version)
+  .replaceAll('__APP_COMMIT__', shortCommit)
+  .replaceAll('__APP_BUILD_DATE__', buildDate)
+  .replaceAll('__APP_BUILD_TITLE__', `commit ${shortCommit}, built ${buildDate}`));
+console.log(`Farsi OCR v${pkg.version} (${shortCommit})`);
 
 // --- vendor libraries -------------------------------------------------------
 const pdfjs = join(nm, 'pdfjs-dist');
