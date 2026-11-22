@@ -9,8 +9,8 @@ export function modelResolveBase() {
   resolvePromise ??= (async () => {
     try {
       const r = await fetch(HF_PROXY_RESOLVE + 'model/assets/prompts.json', {cache: 'no-store'});
-      if (r.ok && (r.headers.get('content-type') || '').includes('json')) {
-        await r.json();
+      // Hugging Face serves .json as text/plain, so check the body, not the type.
+      if (r.ok && JSON.parse(await r.text())['</s><s><predict_text_in_pic>']) {
         return new URL(HF_PROXY_RESOLVE, location.href).href;
       }
     } catch {}

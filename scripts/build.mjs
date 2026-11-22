@@ -80,7 +80,7 @@ await cp(join(root, 'src'), dist, {recursive: true});
 
 // --- version stamp ----------------------------------------------------------
 const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
-let commit = process.env.WORKERS_CI_COMMIT_SHA || process.env.CF_PAGES_COMMIT_SHA || '';
+let commit = [process.env.WORKERS_CI_COMMIT_SHA, process.env.CF_PAGES_COMMIT_SHA].find((v) => /^[0-9a-f]{7,40}$/i.test(v || '')) || '';
 if (!commit) {
   try { commit = execSync('git rev-parse HEAD', {cwd: root}).toString().trim(); } catch { commit = 'local'; }
 }
