@@ -379,7 +379,9 @@ function showEta(progress) {
   const pct = `<span class="pct">${fa(Math.floor(progress.fraction * 100))}٪</span>`;
   if (!progress.laidOutPages) { el.innerHTML = `${pct} — در حال تخمین زمان…`; return; }
   const left = fmtDuration(progress.remainingSeconds);
-  el.innerHTML = `${pct} — ${progress.measured ? 'حدود' : 'تخمین اولیه: حدود'} ${left} مانده`;
+  const slow = progress.remainingSeconds > 180
+    ? ' <a class="small" href="#desktop-card">کند است؟ نسخهٔ ویندوز سریع‌تر است</a>' : '';
+  el.innerHTML = `${pct} — ${progress.measured ? 'حدود' : 'تخمین اولیه: حدود'} ${left} مانده${slow}`;
 }
 
 // ---------------------------------------------------------------------------

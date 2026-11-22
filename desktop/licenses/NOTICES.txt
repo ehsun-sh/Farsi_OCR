@@ -1,0 +1,30 @@
+Farsi OCR desktop — third-party notices
+=======================================
+
+Model
+-----
+Bina 0.4 Koochik by Reza2kn (https://huggingface.co/Reza2kn/Bina-0.4-Koochik),
+ONNX-INT4 derivative (https://huggingface.co/Reza2kn/Bina-0.4-Koochik-ONNX-INT4).
+Based on NVIDIA Nemotron-3.5-Parse.
+Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. Licensed under OpenMDW-1.1
+(full text in Bina-OpenMDW-1.1-LICENSE.txt). The model files are downloaded from
+Hugging Face on first run together with their LICENSE file; they are not part of
+this program's download.
+
+The image preprocessing (farsi_ocr/preprocess.py), page layout
+(farsi_ocr/layout.py) and decoding policy (farsi_ocr/engine.py) are ports of the
+model's reference runtime (preprocess.js, layout_regions.py, bina_portable.py,
+onnx_gpu_worker.py, portable_route.py), also OpenMDW-1.1.
+
+Libraries
+---------
+ONNX Runtime (MIT, Microsoft), NumPy (BSD-3-Clause), Hugging Face tokenizers
+(Apache-2.0), Pillow (MIT-CMU), pypdfium2 (Apache-2.0 / BSD-3-Clause) with PDFium
+(BSD-3-Clause / Apache-2.0), python-docx (MIT), Qt for Python / PySide6 (LGPL-3.0),
+Vazirmatn font by Saber Rastikerdar (SIL Open Font License 1.1, see
+Vazirmatn-OFL.txt). License files of the bundled Python packages are in the
+*.dist-info folders of this program.
+
+NVIDIA CUDA and cuDNN libraries, when you enable the NVIDIA GPU option, are
+downloaded from NVIDIA's packages on PyPI and are governed by NVIDIA's license
+agreements included in those packages.

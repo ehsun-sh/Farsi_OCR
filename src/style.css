@@ -144,6 +144,10 @@ select, input[type=text] {
 }
 .page.working textarea { border-color: var(--accent); }
 
+a.btn { display: inline-block; text-decoration: none; }
+.desktop-card { border-color: var(--accent); }
+.desktop-card p { margin: 8px 0 0; }
+
 .foot { padding-bottom: 40px; font-size: .92rem; }
 .foot p { margin: 8px 0; }
 .version { font-size: .8rem; color: var(--muted); direction: ltr; text-align: right; }

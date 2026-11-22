@@ -1,0 +1,88 @@
+name: Desktop app (Windows)
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['desktop/**', '.github/workflows/desktop.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: desktop/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r desktop/requirements.txt pyinstaller==6.22.3
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          v=$(python -c "import re;print(re.search(r\"__version__ = '([^']+)'\", open('desktop/farsi_ocr/__init__.py').read())[1])")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch the Bina model license (OpenMDW-1.1)
+        shell: bash
+        run: curl -fsSL -o desktop/licenses/Bina-OpenMDW-1.1-LICENSE.txt https://huggingface.co/Reza2kn/Bina-0.4-Koochik-ONNX-INT4/resolve/89e20a65255511bf28442955aad429688083874c/LICENSE
+
+      - name: Build with PyInstaller
+        working-directory: desktop
+        run: >
+          pyinstaller --noconfirm --clean --windowed --name FarsiOCR
+          --icon assets/icon.ico
+          --add-data "assets;assets"
+          --add-data "licenses;licenses"
+          --collect-binaries onnxruntime
+          --copy-metadata onnxruntime-gpu
+          --exclude-module tkinter
+          --exclude-module huggingface_hub
+          main.py
+
+      - name: Smoke test
+        working-directory: desktop
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\FarsiOCR\FarsiOCR.exe -ArgumentList '--check', "$PWD\check.txt" -Wait -PassThru
+          Get-Content check.txt
+          if ($p.ExitCode -ne 0) { exit 1 }
+
+      - name: Package
+        working-directory: desktop/dist
+        shell: pwsh
+        run: |
+          Copy-Item ..\licenses\* FarsiOCR\ -Force
+          7z a -tzip -mx=7 FarsiOCR-Windows-v${{ steps.version.outputs.version }}.zip FarsiOCR | Out-Null
+          Get-Item *.zip | Select-Object Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FarsiOCR-Windows
+          path: desktop/dist/*.zip
+          retention-days: 14
+
+      - name: Publish GitHub release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="desktop-v${{ steps.version.outputs.version }}"
+          zip="desktop/dist/FarsiOCR-Windows-v${{ steps.version.outputs.version }}.zip"
+          notes="نسخهٔ ویندوز OCR فارسی با مدل Bina 0.4 Koochik. فایل zip را باز کنید و FarsiOCR.exe را اجرا کنید. بار اول مدل (حدود ۷۴۰ مگابایت) از Hugging Face دانلود می‌شود. Windows desktop build of Farsi OCR (Bina 0.4 Koochik, OpenMDW-1.1)."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$zip" --clobber
+          else
+            gh release create "$tag" "$zip" --title "Farsi OCR for Windows v${{ steps.version.outputs.version }}" --notes "$notes" --target "$GITHUB_SHA" --latest
+          fi

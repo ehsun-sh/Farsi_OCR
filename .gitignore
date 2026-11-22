@@ -1,3 +1,7 @@
 node_modules/
 dist/
 .DS_Store
+desktop/build/
+desktop/dist/
+desktop/*.spec
+__pycache__/
