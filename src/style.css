@@ -52,7 +52,7 @@ a { color: var(--accent); }
 }
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; min-width: 0; }
-.logo { width: 34px; height: 34px; flex: none; }
+.logo { height: 32px; width: auto; flex: none; display: block; }
 .brand-name { font-weight: 700; font-size: 1.2rem; white-space: nowrap; }
 .version-chip { font-size: .75rem; padding: 0 8px; }
 .nav { display: flex; align-items: center; gap: 8px; }

@@ -7,7 +7,7 @@ import time
 import traceback
 
 from PySide6.QtCore import QObject, QSettings, Qt, QThread, QUrl, Signal, Slot
-from PySide6.QtGui import QDesktopServices, QFont, QFontDatabase, QGuiApplication, QIcon, QPalette, QColor
+from PySide6.QtGui import QDesktopServices, QFont, QFontDatabase, QGuiApplication, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView, QApplication, QComboBox, QFileDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
     QLabel, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit, QProgressBar,
@@ -267,9 +267,17 @@ class MainWindow(QMainWindow):
         v.setContentsMargins(18, 14, 18, 14)
         v.setSpacing(12)
 
-        title = QLabel('OCR فارسی')
+        head = QHBoxLayout()
+        logo_path = downloads.resource_path('assets', 'logo.png')
+        if logo_path.is_file():
+            logo = QLabel()
+            logo.setPixmap(QPixmap(str(logo_path)).scaledToHeight(40, Qt.SmoothTransformation))
+            head.addWidget(logo)
+        title = QLabel('Farsi OCR')
         title.setObjectName('title')
-        v.addWidget(title)
+        head.addWidget(title)
+        head.addStretch(1)
+        v.addLayout(head)
         lead = QLabel(
             'عکس یا PDF فارسی را بدهید و متن را به‌صورت <b>TXT</b>، <b>Word</b> یا <b>Markdown</b> بگیرید. '
             f'تشخیص متن با مدل <a href="{BINA_URL}">بینا (Bina 0.4 Koochik)</a> انجام می‌شود؛ '

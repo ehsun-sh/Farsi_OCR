@@ -1,6 +1,6 @@
 {
   "name": "farsi-ocr",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "description": "OCR فارسی تحت وب با مدل Bina 0.4 Koochik، کاملاً روی مرورگر (WebGPU)",
   "type": "module",
