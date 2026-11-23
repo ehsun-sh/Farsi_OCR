@@ -380,7 +380,7 @@ function showEta(progress) {
   if (!progress.laidOutPages) { el.innerHTML = `${pct} — در حال تخمین زمان…`; return; }
   const left = fmtDuration(progress.remainingSeconds);
   const slow = progress.remainingSeconds > 180
-    ? ' <a class="small" href="#desktop-card">کند است؟ نسخهٔ ویندوز سریع‌تر است</a>' : '';
+    ? ' <a class="small" href="#download">کند است؟ برنامهٔ کامپیوتر سریع‌تر است</a>' : '';
   el.innerHTML = `${pct} — ${progress.measured ? 'حدود' : 'تخمین اولیه: حدود'} ${left} مانده${slow}`;
 }
 

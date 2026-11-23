@@ -30,17 +30,20 @@ npm run dev          # build + سرور محلی روی http://127.0.0.1:8788
 `npm run build` خروجی را در `dist/` می‌سازد. این دستور چند فایل کوچک اجرای بینا (worker، ONNX Runtime سفارشی، کد چیدمان و مجوزها) را از Hugging Face،
 از یک revision ثابت، دانلود و با SHA-256 بررسی می‌کند. فایل‌های بزرگ مدل در build نیستند و مرورگر کاربر مستقیماً از Hugging Face می‌گیرد.
 
-## نسخهٔ ویندوز (برنامهٔ دسکتاپ)
+## برنامهٔ کامپیوتر (Windows، macOS، Linux)
 
 اگر نسخهٔ وب برایتان کند است، نسخهٔ ویندوز همین مدل را مستقیم با **ONNX Runtime** روی CPU (و به‌صورت آزمایشی روی کارت گرافیک NVIDIA با CUDA) اجرا می‌کند. روی یک لپ‌تاپ با RTX 5070، سه خط متن با CPU در حدود ۷ ثانیه خوانده شد.
 
-- دانلود: [Releases](https://github.com/ehsun-sh/Farsi_OCR/releases/latest) ← فایل `FarsiOCR-Windows-v….zip`. آن را باز کنید و `FarsiOCR.exe` را اجرا کنید؛ نصب لازم ندارد.
-- بار اول، مدل [Bina-0.4-Koochik-ONNX-INT4](https://huggingface.co/Reza2kn/Bina-0.4-Koochik-ONNX-INT4) (حدود ۷۴۰ مگابایت، نسخهٔ ثابت و با بررسی هش) از Hugging Face در `%LOCALAPPDATA%\FarsiOCR` دانلود می‌شود.
-- اجرا روی کارت NVIDIA فعلاً آزمایشی است و در تست ما از CPU کندتر بود. دکمهٔ «دانلود CUDA» کتابخانه‌های CUDA 13 و cuDNN 9 (حدود ۱٫۱ گیگابایت) را یک بار از بسته‌های رسمی NVIDIA در PyPI می‌گیرد. درایور NVIDIA باید به‌روز باشد (سری ۵۸۰ یا جدیدتر). اگر کارت گرافیک راه نیفتد، برنامه خودکار با CPU کار می‌کند.
+- دانلود از [Releases](https://github.com/ehsun-sh/Farsi_OCR/releases/latest)؛ نصب لازم ندارد:
+  - Windows 10/11: `FarsiOCR-Windows.zip` را باز کنید و `FarsiOCR.exe` را اجرا کنید.
+  - macOS 14+ (Apple Silicon): `FarsiOCR-macOS.zip` را باز کنید و `FarsiOCR.app` را بار اول با راست‌کلیک ← Open باز کنید (برنامه امضای اپل ندارد).
+  - Linux x86-64: `tar -xzf FarsiOCR-Linux.tar.gz && ./FarsiOCR/FarsiOCR`
+- بار اول، مدل [Bina-0.4-Koochik-ONNX-INT4](https://huggingface.co/Reza2kn/Bina-0.4-Koochik-ONNX-INT4) (حدود ۷۴۰ مگابایت، نسخهٔ ثابت و با بررسی هش) از Hugging Face در `%LOCALAPPDATA%\FarsiOCR` (ویندوز)، `~/Library/Application Support/FarsiOCR` (مک) یا `~/.local/share/FarsiOCR` (لینوکس) دانلود می‌شود.
+- (فقط ویندوز) اجرا روی کارت NVIDIA فعلاً آزمایشی است و در تست ما از CPU کندتر بود. دکمهٔ «دانلود CUDA» کتابخانه‌های CUDA 13 و cuDNN 9 (حدود ۱٫۱ گیگابایت) را یک بار از بسته‌های رسمی NVIDIA در PyPI می‌گیرد. درایور NVIDIA باید به‌روز باشد (سری ۵۸۰ یا جدیدتر). اگر کارت گرافیک راه نیفتد، برنامه خودکار با CPU کار می‌کند.
 - ورودی: عکس (PNG، JPG، WebP، TIFF…) و PDF. خروجی: Word، TXT و Markdown؛ مثل نسخهٔ وب.
 - حالت خط فرمان هم دارد: `FarsiOCR.exe --ocr scan.pdf --out scan.docx --device cpu --log run.log`
 
-کد در پوشهٔ `desktop/` است (Python + PySide6). پیش‌پردازش تصویر (`preprocess.py`) پورت دقیق `preprocess.js` مدل است و خروجی‌اش با نسخهٔ وب بیت‌به‌بیت یکی است. فایل exe را GitHub Actions (`.github/workflows/desktop.yml`) با PyInstaller روی ویندوز می‌سازد و در Releases می‌گذارد. اجرای از روی کد:
+کد در پوشهٔ `desktop/` است (Python + PySide6). پیش‌پردازش تصویر (`preprocess.py`) پورت دقیق `preprocess.js` مدل است و خروجی‌اش با نسخهٔ وب بیت‌به‌بیت یکی است. هر سه نسخه را GitHub Actions (`.github/workflows/desktop.yml`) با PyInstaller می‌سازد و در Releases می‌گذارد. اجرای از روی کد:
 
 ```bash
 cd desktop

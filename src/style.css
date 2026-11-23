@@ -44,7 +44,35 @@ body {
 a { color: var(--accent); }
 .wrap { max-width: 920px; margin: 0 auto; padding: 0 16px; }
 
-.top { padding: 32px 0 8px; }
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; min-width: 0; }
+.logo { width: 34px; height: 34px; flex: none; }
+.brand-name { font-weight: 700; font-size: 1.2rem; white-space: nowrap; }
+.version-chip { font-size: .75rem; padding: 0 8px; }
+.nav { display: flex; align-items: center; gap: 8px; }
+.nav .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; white-space: nowrap; }
+.os-hint { font-size: .75rem; opacity: .85; font-weight: 400; }
+.gh { width: 18px; height: 18px; }
+html { scroll-padding-top: 76px; }
+.os-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 14px; }
+.os-btn {
+  display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text); text-decoration: none;
+}
+.os-btn b { font-size: 1.05rem; text-align: right; }
+.os-btn span { color: var(--muted); font-size: .85rem; }
+.os-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.how { margin: 12px 0 0; padding-inline-start: 20px; }
+.how li { margin: 4px 0; }
+.how code { font-size: .85rem; overflow-wrap: anywhere; }
+
+.top { padding: 28px 0 8px; }
 .top h1 { margin: 0 0 4px; font-size: 1.9rem; }
 .lead { margin: 0 0 6px; }
 .privacy { margin: 0; color: var(--muted); font-size: .92rem; }
@@ -151,10 +179,15 @@ a.btn { display: inline-block; text-decoration: none; }
 .foot { padding-bottom: 40px; font-size: .92rem; }
 .foot p { margin: 8px 0; }
 .version { font-size: .8rem; color: var(--muted); direction: ltr; text-align: right; }
-.top .version { margin: 0 0 2px; }
 
 @media (max-width: 520px) {
   .top h1 { font-size: 1.5rem; }
   .card { padding: 14px; }
   .btn { flex: 1 1 auto; }
+  .nav .btn { flex: none; }
+  .os-hint, .version-chip { display: none; }
+  .brand-name { font-size: 1.05rem; }
+}
+@media (max-width: 400px) {
+  .nav .wide { display: none; }
 }

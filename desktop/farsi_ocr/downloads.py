@@ -48,6 +48,8 @@ class Cancelled(Exception):
 def data_dir():
     if os.name == 'nt':
         base = pathlib.Path(os.environ.get('LOCALAPPDATA') or pathlib.Path.home() / 'AppData' / 'Local')
+    elif sys.platform == 'darwin':
+        base = pathlib.Path.home() / 'Library' / 'Application Support'
     else:
         base = pathlib.Path(os.environ.get('XDG_DATA_HOME') or pathlib.Path.home() / '.local' / 'share')
     return base / APP_NAME

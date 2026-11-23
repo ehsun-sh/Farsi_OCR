@@ -1,7 +1,8 @@
-# Windows desktop build. onnxruntime-gpu also contains the CPU runtime; NVIDIA's
+# Desktop build (Windows, Linux, macOS). On Windows onnxruntime-gpu also contains the CPU runtime; NVIDIA's
 # CUDA/cuDNN DLLs are downloaded by the app on demand (see farsi_ocr/downloads.py).
 numpy==2.3.5
-onnxruntime-gpu==1.31.0
+onnxruntime-gpu==1.31.0; sys_platform == 'win32'
+onnxruntime==1.31.0; sys_platform != 'win32'
 tokenizers==0.22.2
 pillow==12.1.0
 pypdfium2==4.30.0

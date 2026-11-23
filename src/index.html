@@ -14,15 +14,31 @@
   <script type="module" src="app.js"></script>
 </head>
 <body>
-  <header class="top">
+  <header class="site-header">
+    <div class="wrap bar">
+      <a class="brand" href="./" aria-label="Farsi OCR">
+        <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="var(--accent)"/><text x="32" y="44" font-family="Vazirmatn,Tahoma,sans-serif" font-size="34" font-weight="700" text-anchor="middle" fill="#fff">ب</text></svg>
+        <span class="brand-name" dir="ltr">Farsi OCR</span>
+        <span class="chip version-chip" dir="ltr" title="__APP_BUILD_TITLE__">v__APP_VERSION__</span>
+      </a>
+      <nav class="nav">
+        <a class="btn primary" href="#download"><span aria-hidden="true">⬇</span> <span>دانلود<span class="wide"> برنامه</span></span><span class="os-hint" dir="ltr">Windows · Linux · Mac</span></a>
+        <a class="btn" href="https://github.com/ehsun-sh/Farsi_OCR" target="_blank" rel="noopener" aria-label="GitHub">
+          <svg class="gh" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="top">
     <div class="wrap">
       <h1>OCR فارسی</h1>
-      <p class="version" title="__APP_BUILD_TITLE__">v__APP_VERSION__</p>
       <p class="lead">عکس یا PDF فارسی را بدهید و متن را به‌صورت <b>TXT</b>، <b>Word</b> یا <b>Markdown</b> بگیرید.
         تشخیص متن با مدل <a href="https://huggingface.co/Reza2kn/Bina-0.4-Koochik" target="_blank" rel="noopener">بینا (Bina 0.4 Koochik)</a> انجام می‌شود.</p>
       <p class="privacy">🔒 همه‌چیز روی همین مرورگر و با کارت گرافیک خودتان اجرا می‌شود؛ هیچ فایلی به سرور فرستاده نمی‌شود.</p>
     </div>
-  </header>
+  </section>
 
   <main class="wrap">
     <div id="gpu-banner" class="banner" hidden></div>
@@ -97,18 +113,27 @@
       </div>
       <div id="results"></div>
     </section>
-    <section class="card desktop-card" id="desktop-card">
+    <section class="card desktop-card" id="download">
       <div class="card-head">
-        <h2><span class="step">⚡</span> برایتان کند است؟ نسخهٔ ویندوز را بگیرید</h2>
+        <h2><span class="step">⬇</span> دانلود برنامه برای کامپیوتر</h2>
       </div>
-      <p>نسخهٔ وب با WebGPU اجرا می‌شود و روی بیشتر کامپیوترها کند است. نسخهٔ ویندوز همین مدل بینا را مستقیم روی
-        CPU خود کامپیوتر اجرا می‌کند و خیلی سریع‌تر است (روی یک لپ‌تاپ معمولی، سه خط متن در حدود ۷ ثانیه). نصب لازم ندارد:
-        فایل zip را باز کنید و <span dir="ltr">FarsiOCR.exe</span> را اجرا کنید.</p>
-      <div class="row">
-        <a class="btn primary" href="https://github.com/ehsun-sh/Farsi_OCR/releases/latest" target="_blank" rel="noopener">⬇ دانلود نسخهٔ ویندوز</a>
+      <p>برایتان کند است؟ نسخهٔ وب با WebGPU اجرا می‌شود و روی بیشتر کامپیوترها کند است. برنامهٔ کامپیوتر همین مدل بینا را
+        مستقیم روی CPU خود کامپیوتر اجرا می‌کند و خیلی سریع‌تر است (روی یک لپ‌تاپ معمولی، سه خط متن در حدود ۷ ثانیه).
+        نصب لازم ندارد و مثل همین صفحه عکس و PDF می‌گیرد و Word، TXT و Markdown می‌دهد.</p>
+      <div class="os-grid">
+        <a class="os-btn" href="https://github.com/ehsun-sh/Farsi_OCR/releases/latest/download/FarsiOCR-Windows.zip">
+          <b dir="ltr">Windows</b><span>ویندوز ۱۰ و ۱۱ (۶۴ بیتی)</span></a>
+        <a class="os-btn" href="https://github.com/ehsun-sh/Farsi_OCR/releases/latest/download/FarsiOCR-macOS.zip">
+          <b dir="ltr">macOS</b><span>مک‌های Apple Silicon (M1 به بعد)، <span dir="ltr">macOS 14+</span></span></a>
+        <a class="os-btn" href="https://github.com/ehsun-sh/Farsi_OCR/releases/latest/download/FarsiOCR-Linux.tar.gz">
+          <b dir="ltr">Linux</b><span>x86-64، مثل Ubuntu 22.04 به بعد</span></a>
       </div>
-      <p class="small muted">حجم فایل zip حدود ۲۳۰ مگابایت است. بار اول مدل (حدود ۷۴۰ مگابایت) یک بار دانلود می‌شود.
-        اگر ویندوز هشدار «Windows protected your PC» داد، More info و بعد Run anyway را بزنید.</p>
+      <ul class="small muted how">
+        <li><b>ویندوز:</b> zip را باز کنید و <span dir="ltr">FarsiOCR.exe</span> را اجرا کنید. اگر پیغام «Windows protected your PC» آمد، More info و بعد Run anyway را بزنید.</li>
+        <li><b>مک:</b> zip را باز کنید، <span dir="ltr">FarsiOCR.app</span> را به Applications ببرید و بار اول با راست‌کلیک ← Open بازش کنید.</li>
+        <li><b>لینوکس:</b> <code dir="ltr">tar -xzf FarsiOCR-Linux.tar.gz && ./FarsiOCR/FarsiOCR</code></li>
+        <li>بار اول مدل (حدود ۷۴۰ مگابایت) یک بار از Hugging Face دانلود می‌شود. <a href="https://github.com/ehsun-sh/Farsi_OCR/releases" target="_blank" rel="noopener">همهٔ نسخه‌ها</a></li>
+      </ul>
     </section>
   </main>
 
